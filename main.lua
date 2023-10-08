@@ -2,7 +2,6 @@
 
 -- Изображения для фоновых картинок
 local mainMenuBackground = love.graphics.newImage("img/bg_menu.png")
-local gameBackground = love.graphics.newImage("img/bg.png")
 
 -- Изображение для кнопки начать игру
 local buttonStartGameBG = love.graphics.newImage("img/button_play.png")
@@ -67,7 +66,7 @@ end
 
 function love.draw()
     if game then
-        game:draw(gameBackground) -- Отрисовка игры, если она активна
+        game:draw() -- Отрисовка игры, если она активна
     else
         -- Отрисовка фона для главного меню
         love.graphics.draw(mainMenuBackground, 0, 0)

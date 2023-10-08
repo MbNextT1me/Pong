@@ -1,13 +1,15 @@
 -- game.lua
 local Game = {}
+local gameBackground = love.graphics.newImage("img/bg.png")
+local ballImage = love.graphics.newImage("img/ball.png")
 Game.__index = Game
 
 function Game.new()
     local self = setmetatable({}, Game)
     self.gameStart = false
 
-    self.screenWidth = love.graphics.getWidth()
-    self.screenHeight = love.graphics.getHeight()
+    self.screenWidth = gameBackground:getWidth()
+    self.screenHeight = gameBackground:getHeight()
 
     self.leftPaddleImage = love.graphics.newImage("img/rocket_1.png")
     self.rightPaddleImage = love.graphics.newImage("img/rocket_2.png")
@@ -19,24 +21,19 @@ function Game.new()
 
     self.testval = 0
     self.rand = math.random(1, 10)
-    
-    self.ball = {
-        x = self.screenWidth / 2,
-        y = self.screenHeight / 2,
-        size = 10,
-        dx = self.rand,
-        dy = 10 - self.rand,
-        bg = love.graphics.newImage("img/ball.png")
-    }
+
     -- Размеры изображений ракеток
     local leftPaddleImageWidth = self.leftPaddleImage:getWidth()
     local leftPaddleImageHeight = self.leftPaddleImage:getHeight()
     local rightPaddleImageWidth = self.rightPaddleImage:getWidth()
     local rightPaddleImageHeight = self.rightPaddleImage:getHeight()
 
+    -- Отступ ракетки от края экрана
+    local paddleMargin = 20
+
     -- Размеры ракеток на основе размеров изображений
     self.leftPaddle = {
-        x = 20,
+        x = paddleMargin,
         y = self.screenHeight / 2 - leftPaddleImageHeight / 2,
         width = leftPaddleImageWidth,
         height = leftPaddleImageHeight,
@@ -44,11 +41,21 @@ function Game.new()
     }
 
     self.rightPaddle = {
-        x = self.screenWidth - 40,
+        x = self.screenWidth - rightPaddleImageWidth - paddleMargin,
         y = self.screenHeight / 2 - rightPaddleImageHeight / 2,
         width = rightPaddleImageWidth,
         height = rightPaddleImageHeight,
         dy = 5
+    }
+
+    -- Размеры мяча
+    self.ball = {
+        x = self.screenWidth / 2,
+        y = self.screenHeight / 2,
+        size = math.max(ballImage:getWidth(), ballImage:getHeight())/2,
+        dx = self.rand,
+        dy = 10 - self.rand,
+        bg = ballImage
     }
 
     self.scorePlayer1 = 0
@@ -90,8 +97,7 @@ function Game:update(dt)
        self.leftPaddle.x and self.ball.y + self.ball.size > self.leftPaddle.y and self.ball.y - self.ball.size <
        self.leftPaddle.y + self.leftPaddle.height then
         self.ball.dx = -self.ball.dx
-        self.testval = (self.leftPaddle.y + self.leftPaddle.height / 2 -
-        self.ball.y - self.ball.size / 2) / 10
+        self.testval = (self.leftPaddle.y + self.leftPaddle.height / 2 - self.ball.y - self.ball.size / 2) / 10
         self.ball.dy = -self.testval
         self.ball.dx = 10 - math.abs(self.testval)
     end
@@ -140,27 +146,12 @@ function Game:update(dt)
     end
 
 
+    -- Обновление положение мяча + увеличение счета
     if self.ball.x < 0 then
         self.scorePlayer1 = self.scorePlayer1 + 1
         self.leftFlagStart = false
         self.rightFlagStart = false
         self.gameStart = false
-
-        self.leftPaddle = {
-            x = 20,
-            y = self.screenHeight / 2 - 50,
-            width = 20,
-            height = 100,
-            dy = 5
-        }
-
-        self.rightPaddle = {
-            x = self.screenWidth - 40,
-            y = self.screenHeight / 2 - 50,
-            width = 20,
-            height = 100,
-            dy = 5
-        }
         self.ball.x = self.screenWidth / 2
         self.ball.y = self.screenHeight / 2
         self.rand = math.random(1, 10)
@@ -171,20 +162,6 @@ function Game:update(dt)
         self.leftFlagStart = false
         self.rightFlagStart = false
         self.gameStart = false
-        self.leftPaddle = {
-            x = 20,
-            y = self.screenHeight / 2 - 50,
-            width = 20,
-            height = 100,
-            dy = 5
-        }
-        self.rightPaddle = {
-            x = self.screenWidth - 40,
-            y = self.screenHeight / 2 - 50,
-            width = 20,
-            height = 100,
-            dy = 5
-        }
         self.ball.x = self.screenWidth / 2
         self.ball.y = self.screenHeight / 2
         self.rand = math.random(1, 10)
@@ -198,7 +175,7 @@ function Game:update(dt)
     end
 end
 
-function Game:draw(gameBackground)
+function Game:draw()
     -- Отрисовка поля Pong
     love.graphics.clear()
 
@@ -207,7 +184,7 @@ function Game:draw(gameBackground)
     love.graphics.draw(gameBackground, 0, 0)
 
     -- Отрисовка мяча
-    love.graphics.draw(self.ball.bg, self.ball.x, self.ball.y)
+    love.graphics.draw(self.ball.bg, self.ball.x - self.ball.size / 2, self.ball.y - self.ball.size / 2)
 
     -- Отрисовка левой ракетки с фоном
     love.graphics.draw(self.leftPaddleImage, self.leftPaddle.x, self.leftPaddle.y)
@@ -215,16 +192,19 @@ function Game:draw(gameBackground)
     -- Отрисовка правой ракетки с фоном
     love.graphics.draw(self.rightPaddleImage, self.rightPaddle.x, self.rightPaddle.y)
 
+    -- Отрисовка прямоугольника вокруг левой ракетки
+    -- love.graphics.rectangle("line", self.leftPaddle.x, self.leftPaddle.y, self.leftPaddle.width, self.leftPaddle.height)
 
+    -- Отрисовка прямоугольника вокруг правой ракетки
+    -- love.graphics.rectangle("line", self.rightPaddle.x, self.rightPaddle.y, self.rightPaddle.width, self.rightPaddle.height)
+
+
+    -- Вывод игровой информации
     love.graphics.print("Player 1: " .. self.scorePlayer1, self.screenWidth / 4,20)
-    --
     love.graphics.print(self.testval, 2 * self.screenWidth / 4, 20)
-
     love.graphics.print("dx " .. self.ball.dx, 1 * self.screenWidth / 4, 60)
     love.graphics.print("dy " .. self.ball.dy, 3 * self.screenWidth / 4, 60)
-
-    love.graphics.print("Player 2: " .. self.scorePlayer2,
-                        3 * self.screenWidth / 4, 20)
+    love.graphics.print("Player 2: " .. self.scorePlayer2, 3 * self.screenWidth / 4, 20)
 end
 
 return Game

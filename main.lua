@@ -4,7 +4,10 @@
 local mainMenuBackground = love.graphics.newImage("img/bg_menu.png")
 
 -- Изображение для кнопки начать игру
-local buttonStartGameBG = love.graphics.newImage("img/button_play.png")
+local buttonStart = love.graphics.newImage("img/button_play.png")
+
+-- Изображение для кнопки выйти из игры
+local buttonExit = love.graphics.newImage("img/button_exit.png")
 
 local Button = require("button")
 local Game = require("game")
@@ -17,13 +20,12 @@ love.window.setMode(mainMenuBackground:getWidth(), mainMenuBackground:getHeight(
 local screenWidth = love.graphics.getWidth()
 local screenHeight = love.graphics.getHeight()
 
-local buttonWidth = buttonStartGameBG:getWidth()
-local buttonHeight = buttonStartGameBG:getHeight()
+local buttonWidth = buttonStart:getWidth()
+local buttonHeight = buttonStart:getHeight()
 local buttonX = (screenWidth - buttonWidth) / 2
 local buttonY = (screenHeight - buttonHeight) / 2
 
 local game
-
 
 function love.keypressed(key)
     local buttonCount = #buttons
@@ -38,6 +40,7 @@ function love.keypressed(key)
         selectedButtonIndex = selectedButtonIndex + 1
         if selectedButtonIndex > buttonCount then selectedButtonIndex = 1 end
         buttons[selectedButtonIndex].selected = true
+    -- Тут из-за кнопки return срабатывает try_again кнопка и без дополнительной ее обработки в game.lua
     elseif key == "return" then
         if selectedButtonIndex == 1 then
             -- Нажата кнопка "Start game"
@@ -51,9 +54,13 @@ end
 
 function love.load()
 
-    local buttonStartGame = Button.new(buttonX, buttonY, buttonWidth, buttonHeight, "Test", buttonStartGameBG)
+    local buttonsMargin = 25
+
+    local buttonStartGame = Button.new(buttonX, buttonY - buttonsMargin, buttonWidth, buttonHeight, "", buttonStart)
+    local buttonExitFromGame = Button.new(buttonX, buttonY + buttonHeight, buttonWidth, buttonHeight, "", buttonExit)
 
     table.insert(buttons, buttonStartGame)
+    table.insert(buttons, buttonExitFromGame)
 
     buttons[selectedButtonIndex].selected = true
 end
@@ -65,6 +72,7 @@ function love.update(dt)
 end
 
 function love.draw()
+
     if game then
         game:draw() -- Отрисовка игры, если она активна
     else

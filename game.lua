@@ -1,12 +1,20 @@
 -- game.lua
 local Game = {}
+
+-- Начало игры
 local gameBackground = love.graphics.newImage("img/bg.png")
 local ballImage = love.graphics.newImage("img/ball.png")
+
+-- После поражения
+local tryAgainButton = love.graphics.newImage("img/button_tryagain.png")
+local gameOverBackground = love.graphics.newImage("img/bg_gameover.png")
+
 Game.__index = Game
 
 function Game.new()
     local self = setmetatable({}, Game)
     self.gameStart = false
+    self.isGameOver = false
 
     self.screenWidth = gameBackground:getWidth()
     self.screenHeight = gameBackground:getHeight()
@@ -52,10 +60,11 @@ function Game.new()
     self.ball = {
         x = self.screenWidth / 2,
         y = self.screenHeight / 2,
-        size = math.max(ballImage:getWidth(), ballImage:getHeight())/2,
+        size = ballImage:getWidth() / 2,
         dx = self.rand,
         dy = 10 - self.rand,
-        bg = ballImage
+        bg = ballImage,
+        wickPx = 22
     }
 
     self.scorePlayer1 = 0
@@ -99,7 +108,7 @@ function Game:update(dt)
         self.ball.dx = -self.ball.dx
         self.testval = (self.leftPaddle.y + self.leftPaddle.height / 2 - self.ball.y - self.ball.size / 2) / 10
         self.ball.dy = -self.testval
-        self.ball.dx = 10 - math.abs(self.testval)
+        -- self.ball.dx = 10 - math.abs(self.testval)
     end
 
     if self.ball.x - self.ball.size < self.rightPaddle.x + self.rightPaddle.width and self.ball.x + self.ball.size >
@@ -108,7 +117,7 @@ function Game:update(dt)
         self.ball.dx = -self.ball.dx
         self.testval = (self.rightPaddle.y + self.rightPaddle.height / 2 - self.ball.y - self.ball.size / 2) / 10
         self.ball.dy = -self.testval
-        self.ball.dx = -10 + math.abs(self.testval)
+        -- self.ball.dx = -10 + math.abs(self.testval)
     end
 
     -- Обработка движения ракеток
@@ -145,7 +154,6 @@ function Game:update(dt)
         self.autoflag = not self.autoflag
     end
 
-
     -- Обновление положение мяча + увеличение счета
     if self.ball.x < 0 then
         self.scorePlayer1 = self.scorePlayer1 + 1
@@ -173,24 +181,32 @@ function Game:update(dt)
         self.ball.dx = 0
         self.ball.dy = 0
     end
+
+    if self.scorePlayer1 >= 3 or self.scorePlayer2 >= 3 then
+        self.isGameOver = true
+    end    
 end
 
 function Game:draw()
     -- Отрисовка поля Pong
     love.graphics.clear()
 
-
     -- Отрисовка фона для игры
     love.graphics.draw(gameBackground, 0, 0)
 
     -- Отрисовка мяча
-    love.graphics.draw(self.ball.bg, self.ball.x - self.ball.size / 2, self.ball.y - self.ball.size / 2)
+    love.graphics.draw(self.ball.bg, self.ball.x - self.ball.size, self.ball.y - self.ball.size - self.ball.wickPx)
 
     -- Отрисовка левой ракетки с фоном
     love.graphics.draw(self.leftPaddleImage, self.leftPaddle.x, self.leftPaddle.y)
 
     -- Отрисовка правой ракетки с фоном
     love.graphics.draw(self.rightPaddleImage, self.rightPaddle.x, self.rightPaddle.y)
+
+    -- Отладочная отрисовка
+
+    -- Орисовка круга у мяча
+    -- love.graphics.circle("line", self.ball.x, self.ball.y, self.ball.size)
 
     -- Отрисовка прямоугольника вокруг левой ракетки
     -- love.graphics.rectangle("line", self.leftPaddle.x, self.leftPaddle.y, self.leftPaddle.width, self.leftPaddle.height)
@@ -199,12 +215,39 @@ function Game:draw()
     -- love.graphics.rectangle("line", self.rightPaddle.x, self.rightPaddle.y, self.rightPaddle.width, self.rightPaddle.height)
 
 
-    -- Вывод игровой информации
-    love.graphics.print("Player 1: " .. self.scorePlayer1, self.screenWidth / 4,20)
-    love.graphics.print(self.testval, 2 * self.screenWidth / 4, 20)
-    love.graphics.print("dx " .. self.ball.dx, 1 * self.screenWidth / 4, 60)
-    love.graphics.print("dy " .. self.ball.dy, 3 * self.screenWidth / 4, 60)
-    love.graphics.print("Player 2: " .. self.scorePlayer2, 3 * self.screenWidth / 4, 20)
+    -- Тут я проверяю, что до 3 очков дошла игра и тогда рисую фон и кнопку
+    if self.isGameOver then
+        love.graphics.draw(gameOverBackground, 0, 0)
+        local tryAgainButtonWidth = tryAgainButton:getWidth()
+        local tryAgainButtonHeight = tryAgainButton:getHeight()
+        local tryAgainButtonX = (self.screenWidth - tryAgainButtonWidth) / 2
+        local tryAgainButtonY = (self.screenHeight - tryAgainButtonHeight) / 2
+        love.graphics.draw(tryAgainButton, tryAgainButtonX, tryAgainButtonY)
+    end
+    
+    -- Вывод счета игроков
+    local fontSize = 48 -- Размер шрифта для отображения счета
+
+    -- Вывод счета игрока 1
+    local player1Score = tostring(self.scorePlayer1)
+    local player1TextWidth = fontSize * #player1Score
+    local player1TextX = self.screenWidth / 4 - player1TextWidth / 2 - 244
+    love.graphics.setFont(love.graphics.newFont(fontSize))
+    love.graphics.printf(player1Score, player1TextX, 43, player1TextWidth, "center")
+
+    -- Вывод счета игрока 2
+    local player2Score = tostring(self.scorePlayer2)
+    local player2TextWidth = fontSize * #player2Score
+    local player2TextX = 3 * self.screenWidth / 4 - player2TextWidth / 2 + 191
+    love.graphics.printf(player2Score, player2TextX, 43, player2TextWidth, "center")
+
+    -- Предыдущий вывод инфы, мб понадобится
+
+    -- love.graphics.print("Player 1: " .. self.scorePlayer1, self.screenWidth / 4,20)
+    -- love.graphics.print(self.testval, 2 * self.screenWidth / 4, 20)
+    -- love.graphics.print("dx " .. self.ball.dx, 1 * self.screenWidth / 4, 60)
+    -- love.graphics.print("dy " .. self.ball.dy, 3 * self.screenWidth / 4, 60)
+    -- love.graphics.print("Player 2: " .. self.scorePlayer2, 3 * self.screenWidth / 4, 20)
 end
 
 return Game
